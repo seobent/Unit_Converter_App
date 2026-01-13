@@ -46,6 +46,17 @@ const conversionFactors = {
 // Current converter type
 let currentConverter = 'length';
 
+// ExchangeRate-API Configuration
+// Get your FREE API key from: https://www.exchangerate-api.com/
+const EXCHANGE_RATE_API_KEY = '8d05baf5c353a952d7e39ea5'; // Replace with your actual API key
+const EXCHANGE_RATE_API_URL = 'https://v6.exchangerate-api.com/v6';
+
+// Cache for exchange rates
+let exchangeRates = {
+    rates: {},
+    lastUpdated: null
+};
+
 // DOM Elements
 const inputValue = document.getElementById('input-value');
 const outputValue = document.getElementById('output-value');
@@ -131,11 +142,54 @@ function convertTemperature(value, from, to) {
 // ========================================
 
 function convertCurrency(value, from, to) {
+    // Use cached exchange rates if available
+    if (exchangeRates.rates[from] && exchangeRates.rates[from][to]) {
+        const rate = exchangeRates.rates[from][to];
+        return value * rate;
+    }
+    
+    // Fallback to hardcoded rates if API is not available
     const factors = conversionFactors.currency;
-    // Convert to USD first
     const usdValue = value / factors[from];
-    // Convert from USD to target currency
     return usdValue * factors[to];
+}
+
+// ========================================
+// Fetch Exchange Rates from API
+// ========================================
+
+async function fetchExchangeRates(baseCurrency = 'USD') {
+    // Check if we need to update (cache for 1 hour)
+    const now = Date.now();
+    if (exchangeRates.lastUpdated && (now - exchangeRates.lastUpdated) < 3600000) {
+        return; // Use cached rates
+    }
+
+    if (EXCHANGE_RATE_API_KEY === 'YOUR_API_KEY_HERE') {
+        console.warn('API key not configured. Using fallback rates.');
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `${EXCHANGE_RATE_API_URL}/${EXCHANGE_RATE_API_KEY}/latest/${baseCurrency}`
+        );
+        
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.result === 'success') {
+            exchangeRates.rates[baseCurrency] = data.conversion_rates;
+            exchangeRates.lastUpdated = now;
+            console.log('Exchange rates updated successfully');
+        }
+    } catch (error) {
+        console.error('Error fetching exchange rates:', error);
+        // Fallback to hardcoded rates
+    }
 }
 
 // ========================================
@@ -143,15 +197,25 @@ function convertCurrency(value, from, to) {
 // ========================================
 
 function updateExchangeRateInfo(from, to) {
-    const factors = conversionFactors.currency;
-    const rate = factors[to] / factors[from];
     const currencySymbols = {
         USD: '$',
         EUR: '€',
         GBP: '£'
     };
     
-    exchangeRateText.textContent = `1 ${from} = ${rate.toFixed(4)} ${to} (${currencySymbols[from]} → ${currencySymbols[to]})`;
+    let rate = 1;
+    
+    // Get rate from cache if available
+    if (exchangeRates.rates[from] && exchangeRates.rates[from][to]) {
+        rate = exchangeRates.rates[from][to];
+    } else {
+        // Fallback to hardcoded rates
+        const factors = conversionFactors.currency;
+        rate = factors[to] / factors[from];
+    }
+    
+    const rateStatus = exchangeRates.rates[from] ? '(Live)' : '(Offline)';
+    exchangeRateText.textContent = `1 ${from} = ${rate.toFixed(4)} ${to} ${rateStatus} (${currencySymbols[from]} → ${currencySymbols[to]})`;
     exchangeRateInfo.style.display = 'block';
 }
 
@@ -190,6 +254,11 @@ function switchConverter(type) {
     clearFields();
     updateNavigation(type);
     updateConverterUI(type);
+    
+    // Fetch fresh exchange rates when switching to currency converter
+    if (type === 'currency') {
+        fetchExchangeRates('USD');
+    }
 }
 
 // ========================================
@@ -288,6 +357,9 @@ function updateConverterUI(type) {
 document.addEventListener('DOMContentLoaded', function () {
     // Set initial focus
     inputValue.focus();
+    
+    // Fetch initial exchange rates
+    fetchExchangeRates('USD');
 
     console.log('Unit Converter App initialized');
 });
