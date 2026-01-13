@@ -190,6 +190,25 @@ body {
 }
 
 /* ========================================
+   Exchange Rate Info
+   ======================================== */
+
+.exchange-rate-info {
+    background: linear-gradient(135deg, #e8f0fe 0%, #f0e8fe 100%);
+    border-left: 4px solid #667eea;
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.exchange-rate-info p {
+    color: #555;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* ========================================
    Button Styles
    ======================================== */
 

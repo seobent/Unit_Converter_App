@@ -34,6 +34,12 @@ const conversionFactors = {
         pt: 0.473176,
         cup: 0.236588,
         floz: 0.0295735
+    },
+    currency: {
+        // Exchange rates to USD (1 USD = base rate)
+        USD: 1,
+        EUR: 0.92,
+        GBP: 0.79
     }
 };
 
@@ -49,6 +55,8 @@ const converterTitle = document.getElementById('converter-title');
 const swapBtn = document.getElementById('swap-btn');
 const clearBtn = document.getElementById('clear-btn');
 const navLinks = document.querySelectorAll('.nav-link');
+const exchangeRateInfo = document.getElementById('exchange-rate-info');
+const exchangeRateText = document.getElementById('exchange-rate-text');
 
 // ========================================
 // Event Listeners
@@ -69,6 +77,7 @@ function convert() {
 
     if (isNaN(input) || input === '') {
         outputValue.value = '';
+        exchangeRateInfo.style.display = 'none';
         return;
     }
 
@@ -76,10 +85,15 @@ function convert() {
 
     if (currentConverter === 'temperature') {
         result = convertTemperature(input, fromUnit.value, toUnit.value);
+        exchangeRateInfo.style.display = 'none';
+    } else if (currentConverter === 'currency') {
+        result = convertCurrency(input, fromUnit.value, toUnit.value);
+        updateExchangeRateInfo(fromUnit.value, toUnit.value);
     } else {
         const factors = conversionFactors[currentConverter];
         const baseValue = input * factors[fromUnit.value];
         result = baseValue / factors[toUnit.value];
+        exchangeRateInfo.style.display = 'none';
     }
 
     // Round to 6 decimal places
@@ -110,6 +124,35 @@ function convertTemperature(value, from, to) {
     } else if (to === 'K') {
         return celsius + 273.15;
     }
+}
+
+// ========================================
+// Currency Conversion
+// ========================================
+
+function convertCurrency(value, from, to) {
+    const factors = conversionFactors.currency;
+    // Convert to USD first
+    const usdValue = value / factors[from];
+    // Convert from USD to target currency
+    return usdValue * factors[to];
+}
+
+// ========================================
+// Update Exchange Rate Info
+// ========================================
+
+function updateExchangeRateInfo(from, to) {
+    const factors = conversionFactors.currency;
+    const rate = factors[to] / factors[from];
+    const currencySymbols = {
+        USD: '$',
+        EUR: '€',
+        GBP: '£'
+    };
+    
+    exchangeRateText.textContent = `1 ${from} = ${rate.toFixed(4)} ${to} (${currencySymbols[from]} → ${currencySymbols[to]})`;
+    exchangeRateInfo.style.display = 'block';
 }
 
 // ========================================
@@ -171,7 +214,8 @@ function updateConverterUI(type) {
         length: 'Length Converter',
         weight: 'Weight Converter',
         temperature: 'Temperature Converter',
-        volume: 'Volume Converter'
+        volume: 'Volume Converter',
+        currency: 'Currency Converter'
     };
 
     const unitOptions = {
@@ -205,6 +249,11 @@ function updateConverterUI(type) {
             { value: 'pt', text: 'Pints' },
             { value: 'cup', text: 'Cups' },
             { value: 'floz', text: 'Fluid Ounces' }
+        ],
+        currency: [
+            { value: 'USD', text: 'US Dollar ($)' },
+            { value: 'EUR', text: 'Euro (€)' },
+            { value: 'GBP', text: 'British Pound (£)' }
         ]
     };
 

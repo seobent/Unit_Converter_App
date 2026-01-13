@@ -23,6 +23,7 @@
                 <li><a href="#weight" class="nav-link" onclick="switchConverter('weight')">Weight</a></li>
                 <li><a href="#temperature" class="nav-link" onclick="switchConverter('temperature')">Temperature</a></li>
                 <li><a href="#volume" class="nav-link" onclick="switchConverter('volume')">Volume</a></li>
+                <li><a href="#currency" class="nav-link" onclick="switchConverter('currency')">Currency</a></li>
             </ul>
         </div>
     </nav>
@@ -80,6 +81,11 @@
                                 <option value="in" selected>Inches</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Exchange Rate Info (Hidden by default) -->
+                    <div id="exchange-rate-info" class="exchange-rate-info" style="display: none;">
+                        <p id="exchange-rate-text"></p>
                     </div>
 
                     <!-- Buttons -->
